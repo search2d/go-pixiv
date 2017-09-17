@@ -1,0 +1,23 @@
+{
+  "response": {
+    "access_token": "ATN7bmWC7Kg1OneEqSPa9GxKm1l1uVHa8cQQKme7BGY",
+    "expires_in": 3600,
+    "token_type": "bearer",
+    "scope": "",
+    "refresh_token": "wgNv1gZ0y8Z1nIyG4bRbpT2yNMs3hvHhHLIhXDc47G8",
+    "user": {
+      "profile_image_urls": {
+        "px_16x16": "https:\/\/source.pixiv.net\/common\/images\/no_profile_ss.png",
+        "px_50x50": "https:\/\/source.pixiv.net\/common\/images\/no_profile_s.png",
+        "px_170x170": "https:\/\/source.pixiv.net\/common\/images\/no_profile.png"
+      },
+      "id": "1",
+      "name": "foobar",
+      "account": "user_foobar",
+      "mail_address": "foobar@example.com",
+      "is_premium": false,
+      "x_restrict": 2,
+      "is_mail_authorized": true
+    }
+  }
+}
