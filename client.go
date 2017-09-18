@@ -162,7 +162,7 @@ func (p *GetIllustRankingParams) validate() error {
 	return nil
 }
 
-func (p *GetIllustRankingParams) buildQuery() (string, error) {
+func (p *GetIllustRankingParams) buildQuery() string {
 	v := url.Values{}
 
 	v.Set("mode", *p.Mode)
@@ -181,7 +181,7 @@ func (p *GetIllustRankingParams) buildQuery() (string, error) {
 		v.Set("filter", "for_android")
 	}
 
-	return v.Encode(), nil
+	return v.Encode()
 }
 
 func (c *Client) GetIllustRanking(params *GetIllustRankingParams) (*resp.GetIllustRanking, error) {
@@ -189,14 +189,9 @@ func (c *Client) GetIllustRanking(params *GetIllustRankingParams) (*resp.GetIllu
 		return nil, err
 	}
 
-	query, err := params.buildQuery()
-	if err != nil {
-		return nil, err
-	}
-
 	req, err := http.NewRequest(
 		"GET",
-		c.baseURL+"/v1/illust/ranking?"+query,
+		c.baseURL+"/v1/illust/ranking?"+params.buildQuery(),
 		nil,
 	)
 	if err != nil {
