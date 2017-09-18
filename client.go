@@ -255,6 +255,78 @@ func (c *Client) GetIllustRankingNext(nextURL string) (*resp.GetIllustRanking, e
 	return &r, nil
 }
 
+type GetIllustDetailParams struct {
+	IllustID *int
+}
+
+func NewGetIllustDetailParams() *GetIllustDetailParams {
+	return &GetIllustDetailParams{}
+}
+
+func (p *GetIllustDetailParams) SetIllustID(illustID int) *GetIllustDetailParams {
+	p.IllustID = &illustID
+	return p
+}
+
+func (p *GetIllustDetailParams) validate() error {
+	err := &ErrInvalidParams{}
+
+	if p.IllustID == nil {
+		err.Add(ErrInvalidParam{"IllustID", "missing required field"})
+	}
+
+	if err.Len() > 0 {
+		return err
+	}
+
+	return nil
+}
+
+func (p *GetIllustDetailParams) buildQuery() string {
+	v := url.Values{}
+
+	v.Set("illust_id", strconv.Itoa(*p.IllustID))
+
+	return v.Encode()
+}
+
+func (c *Client) GetIllustDetail(params *GetIllustDetailParams) (*resp.GetIllustDetail, error) {
+	if err := params.validate(); err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(
+		"GET",
+		c.baseURL+"/v1/illust/detail?"+params.buildQuery(),
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := c.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, c.onFailure(res)
+	}
+
+	if !strings.Contains(res.Header.Get("Content-Type"), "application/json") {
+		return nil, fmt.Errorf("Content-Type header = %q, should be \"application/json\"", res.Header.Get("Content-Type"))
+	}
+
+	var r resp.GetIllustDetail
+
+	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+		return nil, err
+	}
+
+	return &r, nil
+}
+
 type ErrAPI struct {
 	StatusCode int
 	Status     string

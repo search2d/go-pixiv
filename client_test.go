@@ -238,3 +238,218 @@ func TestClient_GetIllustRanking_NotFound(t *testing.T) {
 		t.Errorf("got APIErrorBody %#v, want %#v", g, e)
 	}
 }
+
+func TestClient_GetIllustDetail1(t *testing.T) {
+	tp := &mockTokenProvider{token: "ATN7bmWC7Kg1OneEqSPa9GxKm1l1uVHa8cQQKme7BGY"}
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if g, e := r.URL.Path, "/v1/illust/detail"; g != e {
+			t.Errorf("got URL path %q, want %q", g, e)
+		}
+
+		if g, e := r.Method, http.MethodGet; g != e {
+			t.Errorf("got HTTP method %q, want %q", g, e)
+		}
+
+		if g, e := r.Header.Get("Authorization"), fmt.Sprintf("Bearer %s", tp.token); g != e {
+			t.Errorf("got Authorization header = %q, want %q", g, e)
+		}
+
+		for k, v := range defaultAPIHeaders {
+			if r.Header.Get(k) != v {
+				t.Errorf("got %s header = %q, want %q", k, r.Header.Get(k), v)
+			}
+		}
+
+		if err := r.ParseForm(); err != nil {
+			t.Fatal(err)
+		}
+
+		expectedForm := url.Values{"illust_id": []string{"1"}}
+		if g, e := r.Form, expectedForm; !reflect.DeepEqual(g, e) {
+			t.Errorf("got form values %#v, want %#v", g, e)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(fixture("fixtures/get_illust_detail_1.json"))
+	}))
+	defer ts.Close()
+
+	cli := NewClient(ClientConfig{
+		TokenProvider: tp,
+		BaseURL:       ts.URL,
+	})
+
+	detail, err := cli.GetIllustDetail(NewGetIllustDetailParams().SetIllustID(1))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedIllust := resp.GetIllustDetailIllust{
+		ID:    1859785,
+		Title: "ヴァーン",
+		Type:  "illust",
+		ImageURLs: map[string]string{
+			"square_medium": "https://i.pximg.net/c/360x360_70/img-master/img/2008/10/14/00/34/39/1859785_p0_square1200.jpg",
+			"medium":        "https://i.pximg.net/c/540x540_70/img-master/img/2008/10/14/00/34/39/1859785_p0_master1200.jpg",
+			"large":         "https://i.pximg.net/c/600x1200_90/img-master/img/2008/10/14/00/34/39/1859785_p0_master1200.jpg",
+		},
+		Caption:  "一度は描いてみたくなります。アルパカ",
+		Restrict: 0,
+		User: resp.GetIllustDetailIllustUser{
+			ID:      107576,
+			Name:    "のじゃ",
+			Account: "",
+			ProfileImageURLs: map[string]string{
+				"medium": "https://i.pximg.net/user-profile/img/2009/04/21/22/41/44/704965_92aff81eafa0c49a6e5f11473e677e74_170.jpg",
+			},
+			IsFollowed: false,
+		},
+		Tags: []resp.GetIllustDetailIllustTag{
+			{Name: "こっちみんな。"},
+			{Name: "アルパカ"},
+			{Name: "アルパカチーノ"},
+			{Name: "イケメン"},
+			{Name: "イラッ☆"},
+			{Name: "クラレ"},
+			{Name: "ニヒル"},
+			{Name: "ボス"},
+			{Name: "ンィィィ"},
+			{Name: "オリジナル1000users入り"},
+		},
+		Tools:       []string{"Photoshop"},
+		CreateDate:  "2008-10-14T00:34:39+09:00",
+		PageCount:   1,
+		Width:       500,
+		Height:      700,
+		SanityLevel: 2,
+		Series:      resp.GetIllustDetailIllustSeries{ID: 0, Title: ""},
+		MetaSinglePage: map[string]string{
+			"original_image_url": "https://i.pximg.net/img-original/img/2008/10/14/00/34/39/1859785_p0.jpg",
+		},
+		MetaPages:      []resp.GetIllustDetailIllustMetaPage{},
+		TotalView:      126084,
+		TotalBookmarks: 3222,
+		IsBookmarked:   false,
+		Visible:        true,
+		IsMuted:        false,
+		TotalComments:  38,
+	}
+	if g, e := detail.Illust, expectedIllust; !reflect.DeepEqual(g, e) {
+		t.Errorf("got Illust %#v, want %#v", g, e)
+	}
+}
+
+func TestClient_GetIllustDetail2(t *testing.T) {
+	tp := &mockTokenProvider{token: "ATN7bmWC7Kg1OneEqSPa9GxKm1l1uVHa8cQQKme7BGY"}
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if g, e := r.URL.Path, "/v1/illust/detail"; g != e {
+			t.Errorf("got URL path %q, want %q", g, e)
+		}
+
+		if g, e := r.Method, http.MethodGet; g != e {
+			t.Errorf("got HTTP method %q, want %q", g, e)
+		}
+
+		if g, e := r.Header.Get("Authorization"), fmt.Sprintf("Bearer %s", tp.token); g != e {
+			t.Errorf("got Authorization header = %q, want %q", g, e)
+		}
+
+		for k, v := range defaultAPIHeaders {
+			if r.Header.Get(k) != v {
+				t.Errorf("got %s header = %q, want %q", k, r.Header.Get(k), v)
+			}
+		}
+
+		if err := r.ParseForm(); err != nil {
+			t.Fatal(err)
+		}
+
+		expectedForm := url.Values{"illust_id": []string{"2"}}
+		if g, e := r.Form, expectedForm; !reflect.DeepEqual(g, e) {
+			t.Errorf("got form values %#v, want %#v", g, e)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(fixture("fixtures/get_illust_detail_2.json"))
+	}))
+	defer ts.Close()
+
+	cli := NewClient(ClientConfig{
+		TokenProvider: tp,
+		BaseURL:       ts.URL,
+	})
+
+	detail, err := cli.GetIllustDetail(NewGetIllustDetailParams().SetIllustID(2))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedIllust := resp.GetIllustDetailIllust{
+		ID:    62397682,
+		Title: "サーバルをさがせ！",
+		Type:  "illust",
+		ImageURLs: map[string]string{
+			"square_medium": "https://i.pximg.net/c/360x360_70/img-master/img/2017/04/14/08/28/03/62397682_p0_square1200.jpg",
+			"medium":        "https://i.pximg.net/c/540x540_70/img-master/img/2017/04/14/08/28/03/62397682_p0_master1200.jpg",
+			"large":         "https://i.pximg.net/c/600x1200_90/img-master/img/2017/04/14/08/28/03/62397682_p0_master1200.jpg"},
+		Caption:  "我々の群れとしての強さを見せるのです",
+		Restrict: 0,
+		User: resp.GetIllustDetailIllustUser{
+			ID:      1900912,
+			Name:    "アース桐下",
+			Account: "",
+			ProfileImageURLs: map[string]string{
+				"medium": "https://i.pximg.net/user-profile/img/2017/08/22/20/22/32/13087631_87fc6cfbb6cfdc5d1879017d5e646860_170.png"},
+			IsFollowed: false,
+		},
+		Tags: []resp.GetIllustDetailIllustTag{
+			{Name: "けものフレンズ"},
+			{Name: "集合絵"},
+			{Name: "オールスター"},
+			{Name: "愛がなければ描けない"},
+			{Name: "ウォーリーをさがせ"},
+			{Name: "セーバル"},
+			{Name: "ジャパリパーク"},
+			{Name: "なにこれすごい"},
+			{Name: "ちっこーい!"},
+			{Name: "けものフレンズ5000users入り"},
+		},
+		Tools:          []string{"CLIP STUDIO PAINT"},
+		CreateDate:     "2017-04-14T08:28:03+09:00",
+		PageCount:      2,
+		Width:          2000,
+		Height:         1500,
+		SanityLevel:    4,
+		Series:         resp.GetIllustDetailIllustSeries{ID: 0, Title: ""},
+		MetaSinglePage: map[string]string{},
+		MetaPages: []resp.GetIllustDetailIllustMetaPage{
+			{
+				ImageURLs: map[string]string{
+					"original":      "https://i.pximg.net/img-original/img/2017/04/14/08/28/03/62397682_p0.jpg",
+					"large":         "https://i.pximg.net/c/600x1200_90/img-master/img/2017/04/14/08/28/03/62397682_p0_master1200.jpg",
+					"medium":        "https://i.pximg.net/c/540x540_70/img-master/img/2017/04/14/08/28/03/62397682_p0_master1200.jpg",
+					"square_medium": "https://i.pximg.net/c/360x360_70/img-master/img/2017/04/14/08/28/03/62397682_p0_square1200.jpg",
+				},
+			},
+			{
+				ImageURLs: map[string]string{
+					"original":      "https://i.pximg.net/img-original/img/2017/04/14/08/28/03/62397682_p1.jpg",
+					"large":         "https://i.pximg.net/c/600x1200_90/img-master/img/2017/04/14/08/28/03/62397682_p1_master1200.jpg",
+					"medium":        "https://i.pximg.net/c/540x540_70/img-master/img/2017/04/14/08/28/03/62397682_p1_master1200.jpg",
+					"square_medium": "https://i.pximg.net/c/360x360_70/img-master/img/2017/04/14/08/28/03/62397682_p1_square1200.jpg",
+				},
+			},
+		},
+		TotalView:      94661,
+		TotalBookmarks: 5257,
+		IsBookmarked:   false,
+		Visible:        true,
+		IsMuted:        false,
+		TotalComments:  131,
+	}
+	if g, e := detail.Illust, expectedIllust; !reflect.DeepEqual(g, e) {
+		t.Errorf("got Illust %#v, want %#v", g, e)
+	}
+}

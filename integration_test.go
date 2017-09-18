@@ -61,3 +61,27 @@ func TestIntegration_GetIllustRanking(t *testing.T) {
 		t.Logf("[%d] ID:%d Title:%q", offset, illust.ID, illust.Title)
 	}
 }
+
+func TestIntegration_GetIllustDetail(t *testing.T) {
+	tokenProvider := NewOauthTokenProvider(OauthTokenProviderConfig{
+		Credential: Credential{
+			Username:     os.Getenv("USERNAME"),
+			Password:     os.Getenv("PASSWORD"),
+			ClientID:     os.Getenv("CLIENT_ID"),
+			ClientSecret: os.Getenv("CLIENT_SECRET"),
+		},
+		Logger: log.New(os.Stderr, "", log.LstdFlags),
+	})
+
+	client := NewClient(ClientConfig{
+		TokenProvider: tokenProvider,
+		Logger:        log.New(os.Stderr, "", log.LstdFlags),
+	})
+
+	illust, err := client.GetIllustDetail(NewGetIllustDetailParams().SetIllustID(62397682))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(illust)
+}
