@@ -85,6 +85,14 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	return c.client.Do(req)
 }
 
+func (c *Client) decodeBody(res *http.Response, v interface{}) error {
+	if !strings.Contains(res.Header.Get("Content-Type"), "application/json") {
+		return fmt.Errorf("Content-Type header = %q, should be \"application/json\"", res.Header.Get("Content-Type"))
+	}
+
+	return json.NewDecoder(res.Body).Decode(v)
+}
+
 func (c *Client) onFailure(res *http.Response) error {
 	r := ErrAPI{
 		StatusCode: res.StatusCode,
@@ -208,13 +216,9 @@ func (c *Client) GetIllustRanking(params *GetIllustRankingParams) (*resp.GetIllu
 		return nil, c.onFailure(res)
 	}
 
-	if !strings.Contains(res.Header.Get("Content-Type"), "application/json") {
-		return nil, fmt.Errorf("Content-Type header = %q, should be \"application/json\"", res.Header.Get("Content-Type"))
-	}
-
 	var r resp.GetIllustRanking
 
-	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+	if err := c.decodeBody(res, &r); err != nil {
 		return nil, err
 	}
 
@@ -237,13 +241,9 @@ func (c *Client) GetIllustRankingNext(nextURL string) (*resp.GetIllustRanking, e
 		return nil, c.onFailure(res)
 	}
 
-	if !strings.Contains(res.Header.Get("Content-Type"), "application/json") {
-		return nil, fmt.Errorf("Content-Type header = %q, should be \"application/json\"", res.Header.Get("Content-Type"))
-	}
-
 	var r resp.GetIllustRanking
 
-	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+	if err := c.decodeBody(res, &r); err != nil {
 		return nil, err
 	}
 
@@ -309,13 +309,9 @@ func (c *Client) GetIllustDetail(params *GetIllustDetailParams) (*resp.GetIllust
 		return nil, c.onFailure(res)
 	}
 
-	if !strings.Contains(res.Header.Get("Content-Type"), "application/json") {
-		return nil, fmt.Errorf("Content-Type header = %q, should be \"application/json\"", res.Header.Get("Content-Type"))
-	}
-
 	var r resp.GetIllustDetail
 
-	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+	if err := c.decodeBody(res, &r); err != nil {
 		return nil, err
 	}
 
