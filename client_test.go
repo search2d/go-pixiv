@@ -261,7 +261,7 @@ func TestClient_GetIllustRanking_NotFound(t *testing.T) {
 	}
 }
 
-func TestClient_GetIllustDetail1(t *testing.T) {
+func TestClient_GetIllustDetail(t *testing.T) {
 	cases := []struct {
 		illustID             int
 		responseBody         []byte
