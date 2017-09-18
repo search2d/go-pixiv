@@ -4,7 +4,10 @@ package pixiv
 
 import (
 	"context"
+	"image"
+	_ "image/jpeg"
 	"log"
+	"net/http"
 	"os"
 	"testing"
 	"time"
@@ -90,4 +93,32 @@ func TestIntegration_GetIllustDetail(t *testing.T) {
 	}
 
 	t.Log(illust)
+}
+
+func TestIntegration_SetDownloadHeaders(t *testing.T) {
+	req, err := http.NewRequest(http.MethodGet, "https://i.pximg.net/img-original/img/2008/10/14/00/34/39/1859785_p0.jpg", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	SetDownloadHeaders(req)
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+
+	if g, e := res.StatusCode, http.StatusOK; g != e {
+		t.Errorf("got status code %d, want %d", g, e)
+	}
+
+	_, ext, err := image.Decode(res.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if g, e := ext, "jpeg"; g != e {
+		t.Errorf("got image format %s, want %s", g, e)
+	}
 }
