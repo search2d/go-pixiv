@@ -152,19 +152,14 @@ func TestOauthTokenProvider_Token_BadRequest(t *testing.T) {
 
 	errToken, ok := err.(ErrToken)
 	if !ok {
-		t.Fatalf("Token() should return an ErrToken if 404 response is received")
+		t.Fatalf("Token() should return an ErrToken if 400 response is received")
 	}
 
 	if g, e := errToken.StatusCode, http.StatusBadRequest; g != e {
 		t.Errorf("got StatusCode %v, want %v", g, e)
 	}
 
-	tokenErrorBody, err := errToken.TokenErrorBody()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	expectedTokenErrorBody := resp.TokenErrorBody{
+	expectedBody := resp.TokenErrorBody{
 		HasError: true,
 		Errors: map[string]resp.TokenError{
 			"system": {
@@ -173,8 +168,7 @@ func TestOauthTokenProvider_Token_BadRequest(t *testing.T) {
 			},
 		},
 	}
-	if g, e := tokenErrorBody, expectedTokenErrorBody; !reflect.DeepEqual(g, e) {
+	if g, e := errToken.Body, expectedBody; !reflect.DeepEqual(g, e) {
 		t.Errorf("got TokenErrorBody %#v, want %#v", g, e)
 	}
-
 }

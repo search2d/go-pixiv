@@ -3,7 +3,6 @@ package pixiv
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -95,20 +94,15 @@ func (c *Client) decodeBody(res *http.Response, v interface{}) error {
 }
 
 func (c *Client) onFailure(res *http.Response) error {
-	r := ErrAPI{
-		StatusCode: res.StatusCode,
-		Status:     res.Status,
-	}
+	errAPI := ErrAPI{StatusCode: res.StatusCode, Status: res.Status}
 
 	if strings.Contains(res.Header.Get("Content-Type"), "application/json") {
-		buf, err := ioutil.ReadAll(res.Body)
-		if err != nil {
+		if err := json.NewDecoder(res.Body).Decode(&errAPI.Body); err != nil {
 			return err
 		}
-		r.JSON = string(buf)
 	}
 
-	return r
+	return errAPI
 }
 
 const (
@@ -322,25 +316,11 @@ func (c *Client) GetIllustDetail(ctx context.Context, params *GetIllustDetailPar
 type ErrAPI struct {
 	StatusCode int
 	Status     string
-	JSON       string
+	Body       resp.APIErrorBody
 }
 
 func (e ErrAPI) Error() string {
 	return fmt.Sprintf("%s", e.Status)
-}
-
-func (e ErrAPI) APIErrorBody() (resp.APIErrorBody, error) {
-	var r resp.APIErrorBody
-
-	if len(e.JSON) == 0 {
-		return r, errors.New("no JSON contents")
-	}
-
-	if err := json.NewDecoder(strings.NewReader(e.JSON)).Decode(&r); err != nil {
-		return r, err
-	}
-
-	return r, nil
 }
 
 type ErrInvalidParams struct {
