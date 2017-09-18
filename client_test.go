@@ -6,9 +6,8 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"reflect"
-	"testing"
-
 	"strconv"
+	"testing"
 
 	"github.com/search2d/go-pixiv/resp"
 )
