@@ -1,6 +1,7 @@
 package pixiv
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,7 +17,7 @@ import (
 )
 
 type TokenProvider interface {
-	Token() (string, error)
+	Token(ctx context.Context) (string, error)
 }
 
 var defaultOauthBaseURL = "https://oauth.secure.pixiv.net"
@@ -88,19 +89,19 @@ func NewOauthTokenProvider(cfg OauthTokenProviderConfig) *OauthTokenProvider {
 	return p
 }
 
-func (p *OauthTokenProvider) Token() (string, error) {
+func (p *OauthTokenProvider) Token(ctx context.Context) (string, error) {
 	p.mx.Lock()
 	defer p.mx.Unlock()
 
 	if p.token == nil {
-		if err := p.authorize(); err != nil {
+		if err := p.authorize(ctx); err != nil {
 			return "", err
 		}
 		return p.token.accessToken, nil
 	}
 
 	if p.token.expired() {
-		if err := p.refresh(); err != nil {
+		if err := p.refresh(ctx); err != nil {
 			return "", err
 		}
 		return p.token.accessToken, nil
@@ -109,7 +110,7 @@ func (p *OauthTokenProvider) Token() (string, error) {
 	return p.token.accessToken, nil
 }
 
-func (p *OauthTokenProvider) authorize() error {
+func (p *OauthTokenProvider) authorize(ctx context.Context) error {
 	v := url.Values{}
 	v.Set("username", p.credential.Username)
 	v.Set("password", p.credential.Password)
@@ -129,7 +130,7 @@ func (p *OauthTokenProvider) authorize() error {
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	res, err := p.request(req)
+	res, err := p.request(req.WithContext(ctx))
 	if err != nil {
 		return err
 	}
@@ -142,7 +143,7 @@ func (p *OauthTokenProvider) authorize() error {
 	return p.onSuccess(res)
 }
 
-func (p *OauthTokenProvider) refresh() error {
+func (p *OauthTokenProvider) refresh(ctx context.Context) error {
 	v := url.Values{}
 	v.Set("refresh_token", p.token.refreshToken)
 	v.Set("client_id", p.credential.ClientID)
@@ -161,7 +162,7 @@ func (p *OauthTokenProvider) refresh() error {
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	res, err := p.request(req)
+	res, err := p.request(req.WithContext(ctx))
 	if err != nil {
 		return err
 	}

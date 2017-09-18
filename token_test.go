@@ -1,6 +1,7 @@
 package pixiv
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -102,7 +103,7 @@ func TestOauthTokenProvider_Token(t *testing.T) {
 		return time.Date(2017, 1, 1, 0, 0, 0, 0, time.UTC)
 	}
 
-	token1, err := tp.Token()
+	token1, err := tp.Token(context.TODO())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -115,7 +116,7 @@ func TestOauthTokenProvider_Token(t *testing.T) {
 		return time.Date(2017, 1, 1, 0, 30, 0, 0, time.UTC)
 	}
 
-	token2, err := tp.Token()
+	token2, err := tp.Token(context.TODO())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,7 +144,7 @@ func TestOauthTokenProvider_Token_BadRequest(t *testing.T) {
 		},
 	})
 
-	_, err := tp.Token()
+	_, err := tp.Token(context.TODO())
 
 	if err == nil {
 		t.Fatalf("Token() should return an error if 400 response is received")

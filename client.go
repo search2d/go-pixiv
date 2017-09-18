@@ -1,6 +1,7 @@
 package pixiv
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -71,7 +72,7 @@ func NewClient(cfg ClientConfig) *Client {
 }
 
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
-	token, err := c.tokenProvider.Token()
+	token, err := c.tokenProvider.Token(req.Context())
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +193,7 @@ func (p *GetIllustRankingParams) buildQuery() string {
 	return v.Encode()
 }
 
-func (c *Client) GetIllustRanking(params *GetIllustRankingParams) (*resp.GetIllustRanking, error) {
+func (c *Client) GetIllustRanking(ctx context.Context, params *GetIllustRankingParams) (*resp.GetIllustRanking, error) {
 	if err := params.validate(); err != nil {
 		return nil, err
 	}
@@ -206,7 +207,7 @@ func (c *Client) GetIllustRanking(params *GetIllustRankingParams) (*resp.GetIllu
 		return nil, err
 	}
 
-	res, err := c.Do(req)
+	res, err := c.Do(req.WithContext(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -225,13 +226,13 @@ func (c *Client) GetIllustRanking(params *GetIllustRankingParams) (*resp.GetIllu
 	return &r, nil
 }
 
-func (c *Client) GetIllustRankingNext(nextURL string) (*resp.GetIllustRanking, error) {
+func (c *Client) GetIllustRankingNext(ctx context.Context, nextURL string) (*resp.GetIllustRanking, error) {
 	req, err := http.NewRequest("GET", nextURL, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := c.Do(req)
+	res, err := c.Do(req.WithContext(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -285,7 +286,7 @@ func (p *GetIllustDetailParams) buildQuery() string {
 	return v.Encode()
 }
 
-func (c *Client) GetIllustDetail(params *GetIllustDetailParams) (*resp.GetIllustDetail, error) {
+func (c *Client) GetIllustDetail(ctx context.Context, params *GetIllustDetailParams) (*resp.GetIllustDetail, error) {
 	if err := params.validate(); err != nil {
 		return nil, err
 	}
@@ -299,7 +300,7 @@ func (c *Client) GetIllustDetail(params *GetIllustDetailParams) (*resp.GetIllust
 		return nil, err
 	}
 
-	res, err := c.Do(req)
+	res, err := c.Do(req.WithContext(ctx))
 	if err != nil {
 		return nil, err
 	}

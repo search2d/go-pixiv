@@ -1,6 +1,7 @@
 package pixiv
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -17,7 +18,7 @@ type mockTokenProvider struct {
 	err   error
 }
 
-func (p *mockTokenProvider) Token() (string, error) {
+func (p *mockTokenProvider) Token(_ context.Context) (string, error) {
 	return p.token, p.err
 }
 
@@ -83,7 +84,7 @@ func TestClient_GetIllustRanking(t *testing.T) {
 		BaseURL:       ts.URL,
 	})
 
-	ranking, err := cli.GetIllustRanking(NewGetIllustRankingParams().SetMode(RankingModeDay))
+	ranking, err := cli.GetIllustRanking(context.TODO(), NewGetIllustRankingParams().SetMode(RankingModeDay))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -229,7 +230,7 @@ func TestClient_GetIllustRanking_NotFound(t *testing.T) {
 
 	cli := NewClient(ClientConfig{TokenProvider: tp, BaseURL: ts.URL})
 
-	_, err := cli.GetIllustRanking(NewGetIllustRankingParams().SetMode(RankingModeDay))
+	_, err := cli.GetIllustRanking(context.TODO(), NewGetIllustRankingParams().SetMode(RankingModeDay))
 	if err == nil {
 		t.Fatalf("GetIllustRanking() should return an error if 404 response is received")
 	}
@@ -428,7 +429,7 @@ func TestClient_GetIllustDetail(t *testing.T) {
 				BaseURL:       ts.URL,
 			})
 
-			detail, err := cli.GetIllustDetail(NewGetIllustDetailParams().SetIllustID(c.illustID))
+			detail, err := cli.GetIllustDetail(context.TODO(), NewGetIllustDetailParams().SetIllustID(c.illustID))
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -3,6 +3,7 @@
 package pixiv
 
 import (
+	"context"
 	"log"
 	"os"
 	"testing"
@@ -12,6 +13,8 @@ import (
 )
 
 func TestIntegration_GetIllustRanking(t *testing.T) {
+	ctx := context.Background()
+
 	tokenProvider := NewOauthTokenProvider(OauthTokenProviderConfig{
 		Credential: Credential{
 			Username:     os.Getenv("USERNAME"),
@@ -32,6 +35,7 @@ func TestIntegration_GetIllustRanking(t *testing.T) {
 	illusts := []resp.GetIllustRankingIllust{}
 
 	initial, err := client.GetIllustRanking(
+		ctx,
 		NewGetIllustRankingParams().SetMode(RankingModeDay).SetDate(date),
 	)
 	if err != nil {
@@ -47,7 +51,7 @@ func TestIntegration_GetIllustRanking(t *testing.T) {
 			break
 		}
 
-		ranking, err := client.GetIllustRankingNext(next)
+		ranking, err := client.GetIllustRankingNext(ctx, next)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -63,6 +67,8 @@ func TestIntegration_GetIllustRanking(t *testing.T) {
 }
 
 func TestIntegration_GetIllustDetail(t *testing.T) {
+	ctx := context.Background()
+
 	tokenProvider := NewOauthTokenProvider(OauthTokenProviderConfig{
 		Credential: Credential{
 			Username:     os.Getenv("USERNAME"),
@@ -78,7 +84,7 @@ func TestIntegration_GetIllustDetail(t *testing.T) {
 		Logger:        log.New(os.Stderr, "", log.LstdFlags),
 	})
 
-	illust, err := client.GetIllustDetail(NewGetIllustDetailParams().SetIllustID(62397682))
+	illust, err := client.GetIllustDetail(ctx, NewGetIllustDetailParams().SetIllustID(62397682))
 	if err != nil {
 		t.Fatal(err)
 	}
