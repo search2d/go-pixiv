@@ -241,7 +241,7 @@ func (e ErrToken) Error() string {
 	return fmt.Sprintf("%s", e.Status)
 }
 
-func (e ErrToken) Decode() (resp.TokenErrorBody, error) {
+func (e ErrToken) TokenErrorBody() (resp.TokenErrorBody, error) {
 	var r resp.TokenErrorBody
 
 	if len(e.JSON) == 0 {

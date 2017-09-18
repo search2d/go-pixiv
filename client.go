@@ -332,7 +332,7 @@ func (e ErrAPI) Error() string {
 	return fmt.Sprintf("%s", e.Status)
 }
 
-func (e ErrAPI) Decode() (resp.APIErrorBody, error) {
+func (e ErrAPI) APIErrorBody() (resp.APIErrorBody, error) {
 	var r resp.APIErrorBody
 
 	if len(e.JSON) == 0 {

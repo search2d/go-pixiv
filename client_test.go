@@ -234,21 +234,21 @@ func TestClient_GetIllustRanking_NotFound(t *testing.T) {
 		t.Fatalf("GetIllustRanking() should return an error if 404 response is received")
 	}
 
-	respErr, ok := err.(ErrAPI)
+	errAPI, ok := err.(ErrAPI)
 	if !ok {
 		t.Fatalf("GetIllustRanking() should return an ErrAPI if 404 response is received")
 	}
 
-	if g, e := respErr.StatusCode, http.StatusNotFound; g != e {
+	if g, e := errAPI.StatusCode, http.StatusNotFound; g != e {
 		t.Errorf("got StatusCode %v, want %v", g, e)
 	}
 
-	apiErrBody, err := respErr.Decode()
+	apiErrorBody, err := errAPI.APIErrorBody()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expectedAPIErrBody := resp.APIErrorBody{
+	expectedAPIErrorBody := resp.APIErrorBody{
 		Error: resp.APIError{
 			UserMessage:        "指定されたエンドポイントは存在しません",
 			Message:            "",
@@ -256,7 +256,7 @@ func TestClient_GetIllustRanking_NotFound(t *testing.T) {
 			UserMessageDetails: map[string]interface{}{},
 		},
 	}
-	if g, e := apiErrBody, expectedAPIErrBody; !reflect.DeepEqual(g, e) {
+	if g, e := apiErrorBody, expectedAPIErrorBody; !reflect.DeepEqual(g, e) {
 		t.Errorf("got APIErrorBody %#v, want %#v", g, e)
 	}
 }
