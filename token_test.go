@@ -8,8 +8,6 @@ import (
 	"reflect"
 	"testing"
 	"time"
-
-	"github.com/search2d/go-pixiv/resp"
 )
 
 func TestOauthTokenProvider_Token(t *testing.T) {
@@ -19,7 +17,7 @@ func TestOauthTokenProvider_Token(t *testing.T) {
 			cnt++
 		}()
 
-		for k, v := range defaultOauthHeaders {
+		for k, v := range DefaultOauthHeaders {
 			if r.Header.Get(k) != v {
 				t.Errorf("got %s header = %q, want %q", k, r.Header.Get(k), v)
 			}
@@ -89,7 +87,9 @@ func TestOauthTokenProvider_Token(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	tp := NewOauthTokenProvider(OauthTokenProviderConfig{
+	var now time.Time
+
+	tp := &OauthTokenProvider{
 		BaseURL: ts.URL,
 		Credential: Credential{
 			Username:     "USERNAME",
@@ -97,11 +97,12 @@ func TestOauthTokenProvider_Token(t *testing.T) {
 			ClientID:     "CLIENT_ID",
 			ClientSecret: "CLIENT_SECRET",
 		},
-	})
-
-	now = func() time.Time {
-		return time.Date(2017, 1, 1, 0, 0, 0, 0, time.UTC)
+		Now: func() time.Time {
+			return now
+		},
 	}
+
+	now = time.Date(2017, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	token1, err := tp.Token(context.TODO())
 	if err != nil {
@@ -112,9 +113,7 @@ func TestOauthTokenProvider_Token(t *testing.T) {
 		t.Errorf("got token %q, want %q", g, e)
 	}
 
-	now = func() time.Time {
-		return time.Date(2017, 1, 1, 0, 30, 0, 0, time.UTC)
-	}
+	now = time.Date(2017, 1, 1, 1, 0, 0, 0, time.UTC)
 
 	token2, err := tp.Token(context.TODO())
 	if err != nil {
@@ -134,7 +133,7 @@ func TestOauthTokenProvider_Token_BadRequest(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	tp := NewOauthTokenProvider(OauthTokenProviderConfig{
+	tp := &OauthTokenProvider{
 		BaseURL: ts.URL,
 		Credential: Credential{
 			Username:     "USERNAME",
@@ -142,26 +141,26 @@ func TestOauthTokenProvider_Token_BadRequest(t *testing.T) {
 			ClientID:     "CLIENT_ID",
 			ClientSecret: "CLIENT_SECRET",
 		},
-	})
+	}
 
 	_, err := tp.Token(context.TODO())
 
 	if err == nil {
-		t.Fatalf("Token() should return an error if 400 response is received")
+		t.Fatalf("Token() should return an error if 400 nse is received")
 	}
 
 	errToken, ok := err.(ErrToken)
 	if !ok {
-		t.Fatalf("Token() should return an ErrToken if 400 response is received")
+		t.Fatalf("Token() should return an ErrToken if 400 nse is received")
 	}
 
 	if g, e := errToken.StatusCode, http.StatusBadRequest; g != e {
 		t.Errorf("got StatusCode %v, want %v", g, e)
 	}
 
-	expectedBody := resp.TokenErrorBody{
+	expectedBody := TokenErrorBody{
 		HasError: true,
-		Errors: map[string]resp.TokenError{
+		Errors: map[string]TokenError{
 			"system": {
 				Message: "103:pixiv ID、またはメールアドレス、パスワードが正しいかチェックしてください。",
 				Code:    1508,
@@ -170,5 +169,38 @@ func TestOauthTokenProvider_Token_BadRequest(t *testing.T) {
 	}
 	if g, e := errToken.Body, expectedBody; !reflect.DeepEqual(g, e) {
 		t.Errorf("got TokenErrorBody %#v, want %#v", g, e)
+	}
+}
+
+func TestToken_Expired(t *testing.T) {
+	token := token{
+		createdAt: time.Date(2017, 1, 1, 0, 0, 0, 0, time.UTC),
+		expiresIn: 30 * time.Minute,
+	}
+
+	cases := []struct {
+		now     time.Time
+		expired bool
+	}{
+		{
+			now:     time.Date(2017, 1, 1, 0, 29, 59, 0, time.UTC),
+			expired: false,
+		},
+		{
+			now:     time.Date(2017, 1, 1, 0, 30, 00, 0, time.UTC),
+			expired: true,
+		},
+		{
+			now:     time.Date(2017, 1, 1, 0, 30, 01, 0, time.UTC),
+			expired: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.now.Format(time.RFC3339), func(t *testing.T) {
+			if g, e := token.expired(c.now), c.expired; g != e {
+				t.Errorf("got %v, want %v", g, e)
+			}
+		})
 	}
 }

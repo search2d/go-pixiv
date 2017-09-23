@@ -4,20 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
-
-	"github.com/search2d/go-pixiv/resp"
 )
 
-var defaultAPIBaseURL = "https://app-api.pixiv.net"
+var DefaultAPIBaseURL = "https://app-api.pixiv.net"
 
-var defaultAPIHeaders = map[string]string{
+var DefaultAPIHeaders = map[string]string{
 	"User-Agent":     "PixivAndroidApp/5.0.64 (Android 6.0; Google Nexus 5X - 6.0.0 - API 23 - 1080x1920)",
 	"App-OS":         "android",
 	"App-OS-Version": "6.0",
@@ -25,72 +20,54 @@ var defaultAPIHeaders = map[string]string{
 }
 
 type Client struct {
-	client        *http.Client
-	logger        *log.Logger
-	tokenProvider TokenProvider
-	baseURL       string
-	headers       map[string]string
-}
-
-type ClientConfig struct {
 	Client        *http.Client
-	Logger        *log.Logger
-	TokenProvider TokenProvider
 	BaseURL       string
 	Headers       map[string]string
-}
-
-func NewClient(cfg ClientConfig) *Client {
-	c := &Client{tokenProvider: cfg.TokenProvider}
-
-	if cfg.Client != nil {
-		c.client = cfg.Client
-	} else {
-		c.client = http.DefaultClient
-	}
-
-	if cfg.Logger != nil {
-		c.logger = cfg.Logger
-	} else {
-		c.logger = log.New(ioutil.Discard, "", 0)
-	}
-
-	if len(cfg.BaseURL) != 0 {
-		c.baseURL = cfg.BaseURL
-	} else {
-		c.baseURL = defaultAPIBaseURL
-	}
-
-	if cfg.Headers != nil {
-		c.headers = cfg.Headers
-	} else {
-		c.headers = defaultAPIHeaders
-	}
-
-	return c
+	TokenProvider TokenProvider
 }
 
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
-	token, err := c.tokenProvider.Token(req.Context())
+	token, err := c.TokenProvider.Token(req.Context())
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
-	for k, v := range c.headers {
+	for k, v := range c.headers() {
 		req.Header.Set(k, v)
 	}
 
-	return c.client.Do(req)
+	return c.client().Do(req)
 }
 
-func (c *Client) decodeBody(res *http.Response, v interface{}) error {
+func (c *Client) client() *http.Client {
+	if c.Client == nil {
+		return http.DefaultClient
+	}
+	return c.Client
+}
+
+func (c *Client) baseURL() string {
+	if c.BaseURL == "" {
+		return DefaultAPIBaseURL
+	}
+	return c.BaseURL
+}
+
+func (c *Client) headers() map[string]string {
+	if c.Headers == nil {
+		return DefaultAPIHeaders
+	}
+	return c.Headers
+}
+
+func (c *Client) onSuccess(res *http.Response, val interface{}) error {
 	if !strings.Contains(res.Header.Get("Content-Type"), "application/json") {
 		return fmt.Errorf("Content-Type header = %q, should be \"application/json\"", res.Header.Get("Content-Type"))
 	}
 
-	return json.NewDecoder(res.Body).Decode(v)
+	return json.NewDecoder(res.Body).Decode(val)
 }
 
 func (c *Client) onFailure(res *http.Response) error {
@@ -122,7 +99,7 @@ const (
 
 type GetIllustRankingParams struct {
 	Mode   *string
-	Date   *time.Time
+	Date   *string
 	Offset *int
 	Filter *string
 }
@@ -136,7 +113,7 @@ func (p *GetIllustRankingParams) SetMode(mode string) *GetIllustRankingParams {
 	return p
 }
 
-func (p *GetIllustRankingParams) SetDate(date time.Time) *GetIllustRankingParams {
+func (p *GetIllustRankingParams) SetDate(date string) *GetIllustRankingParams {
 	p.Date = &date
 	return p
 }
@@ -151,7 +128,7 @@ func (p *GetIllustRankingParams) SetFilter(filter string) *GetIllustRankingParam
 	return p
 }
 
-func (p *GetIllustRankingParams) validate() error {
+func (p *GetIllustRankingParams) Validate() error {
 	err := &ErrInvalidParams{}
 
 	if p.Mode == nil {
@@ -171,7 +148,7 @@ func (p *GetIllustRankingParams) buildQuery() string {
 	v.Set("mode", *p.Mode)
 
 	if p.Date != nil {
-		v.Set("date", p.Date.Format("2006-01-02"))
+		v.Set("date", *p.Date)
 	}
 
 	if p.Offset != nil {
@@ -187,14 +164,14 @@ func (p *GetIllustRankingParams) buildQuery() string {
 	return v.Encode()
 }
 
-func (c *Client) GetIllustRanking(ctx context.Context, params *GetIllustRankingParams) (*resp.GetIllustRanking, error) {
-	if err := params.validate(); err != nil {
+func (c *Client) GetIllustRanking(ctx context.Context, params *GetIllustRankingParams) (*GetIllustRanking, error) {
+	if err := params.Validate(); err != nil {
 		return nil, err
 	}
 
 	req, err := http.NewRequest(
-		"GET",
-		c.baseURL+"/v1/illust/ranking?"+params.buildQuery(),
+		http.MethodGet,
+		c.baseURL()+"/v1/illust/ranking?"+params.buildQuery(),
 		nil,
 	)
 	if err != nil {
@@ -211,17 +188,17 @@ func (c *Client) GetIllustRanking(ctx context.Context, params *GetIllustRankingP
 		return nil, c.onFailure(res)
 	}
 
-	var r resp.GetIllustRanking
+	var result GetIllustRanking
 
-	if err := c.decodeBody(res, &r); err != nil {
+	if err := c.onSuccess(res, &result); err != nil {
 		return nil, err
 	}
 
-	return &r, nil
+	return &result, nil
 }
 
-func (c *Client) GetIllustRankingNext(ctx context.Context, nextURL string) (*resp.GetIllustRanking, error) {
-	req, err := http.NewRequest("GET", nextURL, nil)
+func (c *Client) GetIllustRankingNext(ctx context.Context, nextURL string) (*GetIllustRanking, error) {
+	req, err := http.NewRequest(http.MethodGet, nextURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -236,13 +213,13 @@ func (c *Client) GetIllustRankingNext(ctx context.Context, nextURL string) (*res
 		return nil, c.onFailure(res)
 	}
 
-	var r resp.GetIllustRanking
+	var ranking GetIllustRanking
 
-	if err := c.decodeBody(res, &r); err != nil {
+	if err := c.onSuccess(res, &ranking); err != nil {
 		return nil, err
 	}
 
-	return &r, nil
+	return &ranking, nil
 }
 
 type GetIllustDetailParams struct {
@@ -258,7 +235,7 @@ func (p *GetIllustDetailParams) SetIllustID(illustID int) *GetIllustDetailParams
 	return p
 }
 
-func (p *GetIllustDetailParams) validate() error {
+func (p *GetIllustDetailParams) Validate() error {
 	err := &ErrInvalidParams{}
 
 	if p.IllustID == nil {
@@ -280,14 +257,14 @@ func (p *GetIllustDetailParams) buildQuery() string {
 	return v.Encode()
 }
 
-func (c *Client) GetIllustDetail(ctx context.Context, params *GetIllustDetailParams) (*resp.GetIllustDetail, error) {
-	if err := params.validate(); err != nil {
+func (c *Client) GetIllustDetail(ctx context.Context, params *GetIllustDetailParams) (*GetIllustDetail, error) {
+	if err := params.Validate(); err != nil {
 		return nil, err
 	}
 
 	req, err := http.NewRequest(
-		"GET",
-		c.baseURL+"/v1/illust/detail?"+params.buildQuery(),
+		http.MethodGet,
+		c.baseURL()+"/v1/illust/detail?"+params.buildQuery(),
 		nil,
 	)
 	if err != nil {
@@ -304,46 +281,11 @@ func (c *Client) GetIllustDetail(ctx context.Context, params *GetIllustDetailPar
 		return nil, c.onFailure(res)
 	}
 
-	var r resp.GetIllustDetail
+	var result GetIllustDetail
 
-	if err := c.decodeBody(res, &r); err != nil {
+	if err := c.onSuccess(res, &result); err != nil {
 		return nil, err
 	}
 
-	return &r, nil
-}
-
-type ErrAPI struct {
-	StatusCode int
-	Status     string
-	Body       resp.APIErrorBody
-}
-
-func (e ErrAPI) Error() string {
-	return fmt.Sprintf("%s", e.Status)
-}
-
-type ErrInvalidParams struct {
-	Errs []ErrInvalidParam
-}
-
-func (e *ErrInvalidParams) Error() string {
-	return fmt.Sprintf("%d validation error(s) found", len(e.Errs))
-}
-
-func (e *ErrInvalidParams) Add(err ErrInvalidParam) {
-	e.Errs = append(e.Errs, err)
-}
-
-func (e *ErrInvalidParams) Len() int {
-	return len(e.Errs)
-}
-
-type ErrInvalidParam struct {
-	Field   string
-	Message string
-}
-
-func (e ErrInvalidParam) Error() string {
-	return fmt.Sprintf("%s, %s", e.Field, e.Message)
+	return &result, nil
 }

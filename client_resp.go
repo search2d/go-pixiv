@@ -1,4 +1,4 @@
-package resp
+package pixiv
 
 type APIErrorBody struct {
 	Error APIError `json:"error"`

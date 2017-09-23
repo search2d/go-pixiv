@@ -9,8 +9,6 @@ import (
 	"reflect"
 	"strconv"
 	"testing"
-
-	"github.com/search2d/go-pixiv/resp"
 )
 
 type mockTokenProvider struct {
@@ -30,7 +28,7 @@ func TestClient_Do_Headers(t *testing.T) {
 			t.Errorf("got Authorization header = %q, want %q", g, e)
 		}
 
-		for k, v := range defaultAPIHeaders {
+		for k, v := range DefaultAPIHeaders {
 			if r.Header.Get(k) != v {
 				t.Errorf("got %s header = %q, want %q", k, r.Header.Get(k), v)
 			}
@@ -38,10 +36,7 @@ func TestClient_Do_Headers(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	cli := NewClient(ClientConfig{
-		TokenProvider: tp,
-		BaseURL:       ts.URL,
-	})
+	cli := &Client{TokenProvider: tp, BaseURL: ts.URL}
 
 	req, err := http.NewRequest("GET", ts.URL, nil)
 	if err != nil {
@@ -79,10 +74,7 @@ func TestClient_GetIllustRanking(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	cli := NewClient(ClientConfig{
-		TokenProvider: tp,
-		BaseURL:       ts.URL,
-	})
+	cli := &Client{TokenProvider: tp, BaseURL: ts.URL}
 
 	ranking, err := cli.GetIllustRanking(context.TODO(), NewGetIllustRankingParams().SetMode(RankingModeDay))
 	if err != nil {
@@ -93,7 +85,7 @@ func TestClient_GetIllustRanking(t *testing.T) {
 		t.Errorf("got Illusts count %v, want %v", g, e)
 	}
 
-	expectedIllust00 := resp.GetIllustRankingIllust{
+	expectedIllust00 := GetIllustRankingIllust{
 		ID:    64936066,
 		Title: "♡",
 		Type:  "illust",
@@ -104,7 +96,7 @@ func TestClient_GetIllustRanking(t *testing.T) {
 		},
 		Caption:  "9/12 Happy birthday!! (・８・)",
 		Restrict: 0,
-		User: resp.GetIllustRankingIllustUser{
+		User: GetIllustRankingIllustUser{
 			ID:      6996493,
 			Name:    "Lpip",
 			Account: "lpmya",
@@ -113,7 +105,7 @@ func TestClient_GetIllustRanking(t *testing.T) {
 			},
 			IsFollowed: false,
 		},
-		Tags: []resp.GetIllustRankingIllustTag{
+		Tags: []GetIllustRankingIllustTag{
 			{Name: "ラブライブ!"},
 			{Name: "南ことり"},
 			{Name: "南ことり生誕祭2017"},
@@ -129,11 +121,11 @@ func TestClient_GetIllustRanking(t *testing.T) {
 		Width:       650,
 		Height:      936,
 		SanityLevel: 2,
-		Series:      resp.GetIllustRankingIllustSeries{ID: 0, Title: ""},
+		Series:      GetIllustRankingIllustSeries{ID: 0, Title: ""},
 		MetaSinglePage: map[string]string{
 			"original_image_url": "https://i.pximg.net/img-original/img/2017/09/13/12/30/00/64936066_p0.png",
 		},
-		MetaPages:      []resp.GetIllustRankingIllustMetaPage{},
+		MetaPages:      []GetIllustRankingIllustMetaPage{},
 		TotalView:      59452,
 		TotalBookmarks: 13233,
 		IsBookmarked:   false,
@@ -144,7 +136,7 @@ func TestClient_GetIllustRanking(t *testing.T) {
 		t.Errorf("got Illusts[0] %#v, want %#v", g, e)
 	}
 
-	expectedIllust28 := resp.GetIllustRankingIllust{
+	expectedIllust28 := GetIllustRankingIllust{
 		ID:    64914849,
 		Title: "ことりちゃんHappy birthday (・8・)♡",
 		Type:  "illust",
@@ -155,7 +147,7 @@ func TestClient_GetIllustRanking(t *testing.T) {
 		},
 		Caption:  "ことりちゃんおめでちゅん(・8・)♡<br />仕事で忙しくてあんまり時間が取れないので８時間くらいでサラっと描きました<br /><br />『ラブライブリンガー！ＵＲ 総集編』は現在各委託店にて好評発売中<br />メロンブックス → <a href=\"http://goo.gl/5pZ2Gx\" target=\"_blank\">http://goo.gl/5pZ2Gx</a>\u3000とらのあな → <a href=\"http://goo.gl/VHqabu\" target=\"_blank\">http://goo.gl/VHqabu</a>",
 		Restrict: 0,
-		User: resp.GetIllustRankingIllustUser{
+		User: GetIllustRankingIllustUser{
 			ID:      144203,
 			Name:    "北原朋萌｡",
 			Account: "kitaharakobo",
@@ -164,7 +156,7 @@ func TestClient_GetIllustRanking(t *testing.T) {
 			},
 			IsFollowed: false,
 		},
-		Tags: []resp.GetIllustRankingIllustTag{
+		Tags: []GetIllustRankingIllustTag{
 			{Name: "ラブライブ!"},
 			{Name: "南ことり"},
 			{Name: "ことり式雪だるま"},
@@ -180,12 +172,12 @@ func TestClient_GetIllustRanking(t *testing.T) {
 		Width:       789,
 		Height:      1200,
 		SanityLevel: 4,
-		Series: resp.GetIllustRankingIllustSeries{
+		Series: GetIllustRankingIllustSeries{
 			ID:    0,
 			Title: "",
 		},
 		MetaSinglePage: map[string]string{},
-		MetaPages: []resp.GetIllustRankingIllustMetaPage{
+		MetaPages: []GetIllustRankingIllustMetaPage{
 			{
 				ImageURLs: map[string]string{
 					"original":      "https://i.pximg.net/img-original/img/2017/09/12/00/00/02/64914849_p0.jpg",
@@ -228,24 +220,24 @@ func TestClient_GetIllustRanking_NotFound(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	cli := NewClient(ClientConfig{TokenProvider: tp, BaseURL: ts.URL})
+	cli := &Client{TokenProvider: tp, BaseURL: ts.URL}
 
 	_, err := cli.GetIllustRanking(context.TODO(), NewGetIllustRankingParams().SetMode(RankingModeDay))
 	if err == nil {
-		t.Fatalf("GetIllustRanking() should return an error if 404 response is received")
+		t.Fatalf("GetIllustRanking() should return an error if 404 nse is received")
 	}
 
 	errAPI, ok := err.(ErrAPI)
 	if !ok {
-		t.Fatalf("GetIllustRanking() should return an ErrAPI if 404 response is received")
+		t.Fatalf("GetIllustRanking() should return an ErrAPI if 404 nse is received")
 	}
 
 	if g, e := errAPI.StatusCode, http.StatusNotFound; g != e {
 		t.Errorf("got StatusCode %v, want %v", g, e)
 	}
 
-	expectedBody := resp.APIErrorBody{
-		Error: resp.APIError{
+	expectedBody := APIErrorBody{
+		Error: APIError{
 			UserMessage:        "指定されたエンドポイントは存在しません",
 			Message:            "",
 			Reason:             "",
@@ -259,16 +251,15 @@ func TestClient_GetIllustRanking_NotFound(t *testing.T) {
 
 func TestClient_GetIllustDetail(t *testing.T) {
 	cases := []struct {
-		illustID             int
-		responseBody         []byte
-		expectedIllustDetail *resp.GetIllustDetail
+		illustID     int
+		illustDetail *GetIllustDetail
+		body         []byte
 	}{
 		// 1ページのイラスト
 		{
-			illustID:     1,
-			responseBody: fixture("fixtures/get_illust_detail_1.json"),
-			expectedIllustDetail: &resp.GetIllustDetail{
-				Illust: resp.GetIllustDetailIllust{
+			illustID: 1,
+			illustDetail: &GetIllustDetail{
+				Illust: GetIllustDetailIllust{
 					ID:    1859785,
 					Title: "ヴァーン",
 					Type:  "illust",
@@ -279,7 +270,7 @@ func TestClient_GetIllustDetail(t *testing.T) {
 					},
 					Caption:  "一度は描いてみたくなります。アルパカ",
 					Restrict: 0,
-					User: resp.GetIllustDetailIllustUser{
+					User: GetIllustDetailIllustUser{
 						ID:      107576,
 						Name:    "のじゃ",
 						Account: "",
@@ -288,7 +279,7 @@ func TestClient_GetIllustDetail(t *testing.T) {
 						},
 						IsFollowed: false,
 					},
-					Tags: []resp.GetIllustDetailIllustTag{
+					Tags: []GetIllustDetailIllustTag{
 						{Name: "こっちみんな。"},
 						{Name: "アルパカ"},
 						{Name: "アルパカチーノ"},
@@ -306,11 +297,11 @@ func TestClient_GetIllustDetail(t *testing.T) {
 					Width:       500,
 					Height:      700,
 					SanityLevel: 2,
-					Series:      resp.GetIllustDetailIllustSeries{ID: 0, Title: ""},
+					Series:      GetIllustDetailIllustSeries{ID: 0, Title: ""},
 					MetaSinglePage: map[string]string{
 						"original_image_url": "https://i.pximg.net/img-original/img/2008/10/14/00/34/39/1859785_p0.jpg",
 					},
-					MetaPages:      []resp.GetIllustDetailIllustMetaPage{},
+					MetaPages:      []GetIllustDetailIllustMetaPage{},
 					TotalView:      126084,
 					TotalBookmarks: 3222,
 					IsBookmarked:   false,
@@ -319,13 +310,13 @@ func TestClient_GetIllustDetail(t *testing.T) {
 					TotalComments:  38,
 				},
 			},
+			body: fixture("fixtures/get_illust_detail_1.json"),
 		},
 		// 複数ページのイラスト
 		{
-			illustID:     2,
-			responseBody: fixture("fixtures/get_illust_detail_2.json"),
-			expectedIllustDetail: &resp.GetIllustDetail{
-				Illust: resp.GetIllustDetailIllust{
+			illustID: 2,
+			illustDetail: &GetIllustDetail{
+				Illust: GetIllustDetailIllust{
 					ID:    62397682,
 					Title: "サーバルをさがせ！",
 					Type:  "illust",
@@ -335,7 +326,7 @@ func TestClient_GetIllustDetail(t *testing.T) {
 						"large":         "https://i.pximg.net/c/600x1200_90/img-master/img/2017/04/14/08/28/03/62397682_p0_master1200.jpg"},
 					Caption:  "我々の群れとしての強さを見せるのです",
 					Restrict: 0,
-					User: resp.GetIllustDetailIllustUser{
+					User: GetIllustDetailIllustUser{
 						ID:      1900912,
 						Name:    "アース桐下",
 						Account: "",
@@ -343,7 +334,7 @@ func TestClient_GetIllustDetail(t *testing.T) {
 							"medium": "https://i.pximg.net/user-profile/img/2017/08/22/20/22/32/13087631_87fc6cfbb6cfdc5d1879017d5e646860_170.png"},
 						IsFollowed: false,
 					},
-					Tags: []resp.GetIllustDetailIllustTag{
+					Tags: []GetIllustDetailIllustTag{
 						{Name: "けものフレンズ"},
 						{Name: "集合絵"},
 						{Name: "オールスター"},
@@ -361,9 +352,9 @@ func TestClient_GetIllustDetail(t *testing.T) {
 					Width:          2000,
 					Height:         1500,
 					SanityLevel:    4,
-					Series:         resp.GetIllustDetailIllustSeries{ID: 0, Title: ""},
+					Series:         GetIllustDetailIllustSeries{ID: 0, Title: ""},
 					MetaSinglePage: map[string]string{},
-					MetaPages: []resp.GetIllustDetailIllustMetaPage{
+					MetaPages: []GetIllustDetailIllustMetaPage{
 						{
 							ImageURLs: map[string]string{
 								"original":      "https://i.pximg.net/img-original/img/2017/04/14/08/28/03/62397682_p0.jpg",
@@ -389,6 +380,7 @@ func TestClient_GetIllustDetail(t *testing.T) {
 					TotalComments:  131,
 				},
 			},
+			body: fixture("fixtures/get_illust_detail_2.json"),
 		},
 	}
 
@@ -415,21 +407,18 @@ func TestClient_GetIllustDetail(t *testing.T) {
 				}
 
 				w.Header().Set("Content-Type", "application/json")
-				w.Write(c.responseBody)
+				w.Write(c.body)
 			}))
 			defer ts.Close()
 
-			cli := NewClient(ClientConfig{
-				TokenProvider: tp,
-				BaseURL:       ts.URL,
-			})
+			cli := &Client{TokenProvider: tp, BaseURL: ts.URL}
 
 			detail, err := cli.GetIllustDetail(context.TODO(), NewGetIllustDetailParams().SetIllustID(c.illustID))
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			if g, e := detail, c.expectedIllustDetail; !reflect.DeepEqual(g, e) {
+			if g, e := detail, c.illustDetail; !reflect.DeepEqual(g, e) {
 				t.Errorf("got %#v, want %#v", g, e)
 			}
 		})

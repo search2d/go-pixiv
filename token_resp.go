@@ -1,4 +1,4 @@
-package resp
+package pixiv
 
 type TokenErrorBody struct {
 	HasError bool                  `json:"has_error"`
